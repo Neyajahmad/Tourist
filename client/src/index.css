@@ -1,0 +1,362 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #0f172a;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.glass-panel {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Responsive Utilities */
+.hero-title {
+  font-size: 5rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  line-height: 1.1;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  max-width: 800px;
+  margin-bottom: 48px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.5;
+}
+
+.btn-container {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.auth-panel {
+  position: relative;
+  z-index: 1;
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.admin-auth-panel {
+  position: relative;
+  z-index: 1;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 24px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 3rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 32px;
+  }
+
+  .btn-container {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-container button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .auth-panel,
+  .admin-auth-panel {
+    padding: 24px;
+    width: calc(100% - 32px);
+    margin: 16px;
+  }
+}
+
+/* Dashboard Layout Utilities */
+.dashboard-container {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  width: 100vw;
+  background: #0f172a;
+  color: white;
+  overflow: hidden;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sidebar-user {
+  width: clamp(260px, 26vw, 340px);
+  margin: 20px;
+  padding: 24px;
+  border-radius: 24px;
+  max-height: calc(100vh - 40px);
+}
+
+.sidebar-admin {
+  width: 400px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  margin: 0;
+}
+
+.map-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.map-wrapper-user {
+  margin: 20px 20px 20px 0;
+}
+
+.floating-stats {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 15px 25px;
+  z-index: 1000;
+  display: flex;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  color: #0f172a;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  align-items: center;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 30px;
+  background: #e2e8f0;
+}
+
+@media (max-width: 1024px) {
+  .floating-stats {
+    gap: 12px;
+    padding: 10px 15px;
+    right: 10px;
+  }
+
+  .sidebar-user {
+    width: 260px;
+  }
+
+  .sidebar-admin {
+    width: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+    position: relative;
+    /* Base layer for layering map vs sheet */
+  }
+
+  /* User Dashboard App Layering */
+  .map-wrapper-user {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    z-index: 0;
+  }
+
+  .map-wrapper-user>div {
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  .floating-stats {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+    flex-wrap: nowrap;
+    /* Keep them side-by-side */
+    justify-content: space-evenly;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+  }
+
+  .stat-divider {
+    display: block;
+    height: 30px;
+    width: 1px;
+    background: #e2e8f0;
+  }
+
+  .mobile-bottom-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    color: #0f172a;
+    border-radius: 30px 30px 0 0;
+    padding: 24px;
+    z-index: 10;
+    max-height: 60vh;
+    overflow-y: auto;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* User Info Card styled exactly like the provided screenshot */
+  .mobile-user-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+    margin-bottom: 24px;
+    background: #f8fafc;
+  }
+
+  .mobile-user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Admin Mobile Layout Classes */
+  .mobile-admin-header {
+    background: white;
+    color: #1e293b;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e2e8f0;
+    z-index: 20;
+    position: relative;
+  }
+
+  .mobile-admin-header h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .mobile-admin-header button {
+    color: #ef4444;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: none;
+    border: none;
+    text-transform: uppercase;
+  }
+
+  .mobile-tabs {
+    display: flex;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    z-index: 20;
+    position: relative;
+  }
+
+  .mobile-tab {
+    flex: 1;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mobile-tab.active {
+    color: #6366f1;
+    /* Purple tab active color from screenshot */
+    border-bottom-color: #6366f1;
+  }
+
+  .mobile-admin-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Reset desktop sidebar widths for admin if in column layout but not full height */
+  .sidebar-user {
+    /* Only applies to desktop now, since we switch class name */
+    display: none;
+  }
+
+  .sidebar-admin {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border: none;
+    background: white;
+    /* Admin panel background matches screenshot */
+    color: #0f172a;
+  }
+}
