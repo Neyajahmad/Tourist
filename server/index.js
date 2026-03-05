@@ -58,6 +58,10 @@ io.on('connection', socket => {
     io.emit('activeUsers', Array.from(activeUsers.keys()));
   });
 
+  socket.on('requestActiveUsers', () => {
+    socket.emit('activeUsers', Array.from(activeUsers.keys()));
+  });
+
   socket.on('disconnect', () => {
     let disconnectedUser = null;
     for (const [userId, socketId] of activeUsers.entries()) {
@@ -101,27 +105,27 @@ io.on('connection', socket => {
   })
 })
 
-;(async () => {
-  let port = parseInt(process.env.PORT || 5000, 10)
-  while (true) {
-    try {
-      await new Promise((resolve, reject) => {
-        const onError = (e) => reject(e)
-        server.once('error', onError)
-        server.listen(port, () => {
-          server.off('error', onError)
-          resolve()
+  ; (async () => {
+    let port = parseInt(process.env.PORT || 5000, 10)
+    while (true) {
+      try {
+        await new Promise((resolve, reject) => {
+          const onError = (e) => reject(e)
+          server.once('error', onError)
+          server.listen(port, () => {
+            server.off('error', onError)
+            resolve()
+          })
         })
-      })
-      console.log(`Server running on port ${port}`)
-      break
-    } catch (e) {
-      if (e && e.code === 'EADDRINUSE') {
-        port += 1
-        continue
-      } else {
-        throw e
+        console.log(`Server running on port ${port}`)
+        break
+      } catch (e) {
+        if (e && e.code === 'EADDRINUSE') {
+          port += 1
+          continue
+        } else {
+          throw e
+        }
       }
     }
-  }
-})()
+  })()

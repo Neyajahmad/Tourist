@@ -101,6 +101,9 @@ const AdminDashboard = () => {
       setActiveUsers(activeIds);
     });
 
+    // Request initial active users list on load
+    socket.emit('requestActiveUsers');
+
     // Live tourist locations
     socket.on('touristLocation', (data) => {
       const { lat, lng, userId } = data || {};
