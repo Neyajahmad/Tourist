@@ -302,7 +302,7 @@ const Dashboard = () => {
       )}
 
       {/* Main Map Area */}
-      <div className="map-wrapper map-wrapper-user" style={isMobile ? { display: activeTab === 'map' ? 'flex' : 'none', position: 'relative', zIndex: 0, margin: 0, top: 0, left: 0, flex: 1, flexDirection: 'column', minHeight: 0 } : {}}>
+      <div className="map-wrapper map-wrapper-user" style={isMobile ? { display: activeTab === 'map' ? 'flex' : 'none', position: 'relative', zIndex: 0, margin: 0, top: 0, left: 0, flex: 1, flexDirection: 'column', minHeight: 0 } : { display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
         <div style={{ flex: 1, borderRadius: isMobile ? '0' : '24px', overflow: 'hidden', border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
           <MapContainer center={[location.lat, location.lng]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={!isMobile}>
             <TileLayer
@@ -393,7 +393,7 @@ const Dashboard = () => {
         initial={{ x: isMobile ? 0 : -100, opacity: isMobile ? 0 : 1 }}
         animate={{ x: 0, opacity: 1 }}
         className="sidebar sidebar-user"
-        style={isMobile ? { display: activeTab === 'sos' ? 'flex' : 'none', flex: 1, margin: 0, width: '100%', borderRadius: 0, background: '#f8fafc', overflowY: 'auto', padding: '20px', flexDirection: 'column', color: '#0f172a' } : {}}
+        style={isMobile ? { display: activeTab === 'sos' ? 'flex' : 'none', flex: 1, margin: 0, width: '100%', borderRadius: 0, background: '#f8fafc', overflowY: 'auto', padding: '20px', flexDirection: 'column', color: '#0f172a' } : { display: 'flex', flexDirection: 'column', flexShrink: 0 }}
       >
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {!isMobile && (
