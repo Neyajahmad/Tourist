@@ -78,14 +78,19 @@ const Dashboard = () => {
           const distM = L.latLng(prev.lat, prev.lng).distanceTo(L.latLng(newLat, newLng));
           const dtS = Math.max(1, (now - prev.t) / 1000);
           let kmh;
-          if (typeof position.coords.speed === 'number' && position.coords.speed >= 0) {
+          if (typeof position.coords.speed === 'number' && position.coords.speed !== null && position.coords.speed >= 0) {
             kmh = position.coords.speed * 3.6;
           } else {
             kmh = (distM / dtS) * 3.6;
           }
-          if (kmh < 0 || kmh > 180 || distM < 2) {
-            kmh = speedEmaRef.current; // ignore spikes and jitter
+
+          if (kmh < 2.5) {
+            kmh = 0;
+            speedEmaRef.current = 0; // Instantly snap to 0 to prevent lingering speed while stationary
+          } else if (kmh > 180) {
+            kmh = speedEmaRef.current || 0;
           }
+
           const alpha = 0.25;
           const ema = alpha * kmh + (1 - alpha) * (speedEmaRef.current || 0);
           speedEmaRef.current = ema;
