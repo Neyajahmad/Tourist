@@ -218,9 +218,9 @@ const Dashboard = () => {
 
   const checkRisk = async (lat, lng) => {
     const payload = {
-      speed: Math.random() * 10,
+      speed: speedEmaRef.current || 0,
       movement_gap: 0,
-      area_risk: Math.random() > 0.8 ? 1 : 0,
+      area_risk: 0,
       time_hour: new Date().getHours(),
       lat, lng,
       touristId: user?.id
@@ -228,7 +228,7 @@ const Dashboard = () => {
 
     try {
       const res = await axios.post(`${API_BASE}/api/incidents/check-risk`, payload);
-      setRisk({ label: res.data.riskLabel, score: res.data.riskScore });
+      setRisk({ label: res.data.risk_level, score: res.data.risk_score });
     } catch (e) {
       console.error(e);
     }
