@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import io from 'socket.io-client';
 import axios from 'axios';
-import { motion, useAnimation, useDragControls } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Shield, MapPin, LogOut, Siren, User, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -51,43 +51,7 @@ const Dashboard = () => {
   const isMobile = viewport.w < 640;
   const isTablet = viewport.w < 1024;
 
-  const sheetControls = useAnimation();
-  const dragControls = useDragControls();
-  const [sheetState, setSheetState] = useState('half');
-
-  const snapPoints = {
-    full: 100,
-    half: viewport.h * 0.5,
-    collapsed: viewport.h - 140
-  };
-
-  useEffect(() => {
-    if (isMobile) {
-      sheetControls.start({ y: snapPoints[sheetState], transition: { type: 'spring', damping: 25, stiffness: 200 } });
-    }
-  }, [isMobile, viewport.h, sheetState, sheetControls]);
-
-  const onDragEnd = (event, info) => {
-    const offset = info.offset.y;
-    const velocity = info.velocity.y;
-
-    if (velocity > 500) {
-      if (sheetState === 'full') setSheetState('half');
-      else setSheetState('collapsed');
-    } else if (velocity < -500) {
-      if (sheetState === 'collapsed') setSheetState('half');
-      else setSheetState('full');
-    } else {
-      const currentY = snapPoints[sheetState] + offset;
-      const distToFull = Math.abs(currentY - snapPoints.full);
-      const distToHalf = Math.abs(currentY - snapPoints.half);
-      const distToCollapsed = Math.abs(currentY - snapPoints.collapsed);
-      const min = Math.min(distToFull, distToHalf, distToCollapsed);
-      if (min === distToFull) setSheetState('full');
-      else if (min === distToHalf) setSheetState('half');
-      else setSheetState('collapsed');
-    }
-  };
+  const [activeTab, setActiveTab] = useState('map');
 
   useEffect(() => {
     if (!user) {
@@ -314,118 +278,116 @@ const Dashboard = () => {
 
   const chatListMaxH = isMobile ? '28vh' : '160px';
   return (
-    <div className="dashboard-container">
-      {/* Main Map Area (put first in DOM for absolute stacking) */}
-      <div className="map-wrapper map-wrapper-user">
-        <div style={{ height: '100%', borderRadius: isMobile ? '0' : '24px', overflow: 'hidden', border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
-          <MapContainer center={[location.lat, location.lng]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={!isMobile}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker position={[location.lat, location.lng]}>
-              <Popup>
-                Current Location <br /> Risk: {risk.label}
-              </Popup>
-            </Marker>
-            {path.length > 1 && (
-              <Polyline positions={path} pathOptions={{ color: '#3B82F6', weight: 4, opacity: 0.7 }} />
-            )}
-            {(geoData.restrictedZones || []).map(z => (
-              <Circle key={z.id} center={[z.center.lat, z.center.lng]} radius={z.radius} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15 }} />
-            ))}
-            {(geoData.crowdedAreas || []).map(a => (
-              <Circle key={a.id} center={[a.center.lat, a.center.lng]} radius={a.radius} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.2 }} />
-            ))}
-            <MapUpdater location={location} />
-          </MapContainer>
-        </div>
+    <div className="dashboard-container" style={{ flexDirection: isMobile ? 'column' : 'row' }}>
 
-        {/* Floating Stats */}
-        <motion.div
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="floating-stats"
-        >
-          {isMobile ? (
-            <>
-              <div style={{ textAlign: 'center', flex: 1 }}>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Speed</p>
-                <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.9rem' }}>{speedKmh.toFixed(1)} km/h</p>
-              </div>
-              <div className="stat-divider"></div>
-              <div style={{ textAlign: 'center', flex: 1 }}>
-                <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Nearest Landmark</p>
-                <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nearestLandmark ? nearestLandmark.name : '--'}</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <MapPin size={20} color="#3B82F6" />
-                <div>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Latitude</p>
-                  <p style={{ margin: 0, fontWeight: 'bold' }}>{location.lat.toFixed(4)}</p>
-                </div>
-              </div>
-              <div className="stat-divider"></div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <MapPin size={20} color="#3B82F6" />
-                <div>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Longitude</p>
-                  <p style={{ margin: 0, fontWeight: 'bold' }}>{location.lng.toFixed(4)}</p>
-                </div>
-              </div>
-              <div className="stat-divider"></div>
-              <div>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Speed</p>
-                <p style={{ margin: 0, fontWeight: 'bold' }}>{speedKmh.toFixed(1)} km/h</p>
-              </div>
-              {nearestLandmark && (
-                <>
-                  <div className="stat-divider"></div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Nearest Landmark</p>
-                    <p style={{ margin: 0, fontWeight: 'bold' }}>{nearestLandmark.name} ({Math.round(nearestLandmark.distM)} m)</p>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Sidebar / Bottom Sheet */}
-      <motion.div
-        initial={isMobile ? { y: viewport.h } : { x: -100, y: 0 }}
-        animate={isMobile ? sheetControls : { x: 0, y: 0 }}
-        style={isMobile ? { height: `${viewport.h - 60}px` } : {}}
-        drag={isMobile ? "y" : false}
-        dragControls={isMobile ? dragControls : undefined}
-        dragListener={false}
-        dragElastic={0.1}
-        dragConstraints={isMobile ? { top: snapPoints.full, bottom: snapPoints.collapsed } : undefined}
-        onDragEnd={isMobile ? onDragEnd : undefined}
-        className={isMobile ? "mobile-bottom-sheet" : "sidebar sidebar-user"}
-      >
-        {isMobile && (
-          <div className="sheet-header-handle" onPointerDown={(e) => dragControls.start(e)}>
-            <div className="sheet-handle-bar" />
+      {isMobile && (
+        <div>
+          <div className="mobile-admin-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Shield size={24} color="#3B82F6" />
+              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>Tourist Dashboard</h2>
+            </div>
+            <button onClick={handleLogout} style={{ color: '#ef4444', fontWeight: 'bold' }}>LOGOUT</button>
           </div>
-        )}
-        <div className={isMobile ? "sheet-content" : ""}>
-          <div>
+          <div className="mobile-tabs">
+            <div className={`mobile-tab ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}>Current Location</div>
+            <div className={`mobile-tab ${activeTab === 'sos' ? 'active' : ''}`} onClick={() => setActiveTab('sos')}>SOS Alert</div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Map Area */}
+      {(!isMobile || activeTab === 'map') && (
+        <div className="map-wrapper map-wrapper-user" style={isMobile ? { position: 'relative', height: 'calc(100vh - 100px)', zIndex: 0, margin: 0, top: 0, left: 0 } : {}}>
+          <div style={{ height: '100%', borderRadius: isMobile ? '0' : '24px', overflow: 'hidden', border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
+            <MapContainer center={[location.lat, location.lng]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={!isMobile}>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={[location.lat, location.lng]}>
+                <Popup>
+                  Current Location <br /> Risk: {risk.label}
+                </Popup>
+              </Marker>
+              {path.length > 1 && (
+                <Polyline positions={path} pathOptions={{ color: '#3B82F6', weight: 4, opacity: 0.7 }} />
+              )}
+              {(geoData.restrictedZones || []).map(z => (
+                <Circle key={z.id} center={[z.center.lat, z.center.lng]} radius={z.radius} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15 }} />
+              ))}
+              {(geoData.crowdedAreas || []).map(a => (
+                <Circle key={a.id} center={[a.center.lat, a.center.lng]} radius={a.radius} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.2 }} />
+              ))}
+              <MapUpdater location={location} />
+            </MapContainer>
+          </div>
+
+          {/* Floating Stats */}
+          <motion.div
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="floating-stats"
+          >
             {isMobile ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Bell size={24} color="#0f172a" />
-                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a' }}>User Dashboard</h2>
+              <>
+                <div style={{ textAlign: 'center', flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Speed</p>
+                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.9rem' }}>{speedKmh.toFixed(1)} km/h</p>
                 </div>
-                <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                  <LogOut size={24} color="#64748b" />
-                </button>
-              </div>
+                <div className="stat-divider"></div>
+                <div style={{ textAlign: 'center', flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Nearest Landmark</p>
+                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nearestLandmark ? nearestLandmark.name : '--'}</p>
+                </div>
+              </>
             ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <MapPin size={20} color="#3B82F6" />
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Latitude</p>
+                    <p style={{ margin: 0, fontWeight: 'bold' }}>{location.lat.toFixed(4)}</p>
+                  </div>
+                </div>
+                <div className="stat-divider"></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <MapPin size={20} color="#3B82F6" />
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Longitude</p>
+                    <p style={{ margin: 0, fontWeight: 'bold' }}>{location.lng.toFixed(4)}</p>
+                  </div>
+                </div>
+                <div className="stat-divider"></div>
+                <div>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Speed</p>
+                  <p style={{ margin: 0, fontWeight: 'bold' }}>{speedKmh.toFixed(1)} km/h</p>
+                </div>
+                {nearestLandmark && (
+                  <>
+                    <div className="stat-divider"></div>
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Nearest Landmark</p>
+                      <p style={{ margin: 0, fontWeight: 'bold' }}>{nearestLandmark.name} ({Math.round(nearestLandmark.distM)} m)</p>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </motion.div>
+        </div>
+      )}
+
+      {/* Sidebar / SOS Alert Panel */}
+      {(!isMobile || activeTab === 'sos') && (
+        <motion.div
+          initial={{ x: isMobile ? 0 : -100, opacity: isMobile ? 0 : 1 }}
+          animate={{ x: 0, opacity: 1 }}
+          className="sidebar sidebar-user"
+          style={isMobile ? { flex: 1, margin: 0, width: '100%', height: 'calc(100vh - 100px)', borderRadius: 0, background: '#f8fafc', overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', color: '#0f172a' } : {}}
+        >
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {!isMobile && (
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
                 <Shield size={32} color="#3B82F6" />
                 <h2 style={{ marginLeft: '12px', fontSize: '1.2rem', fontWeight: 'bold' }}>User Dashboard</h2>
@@ -636,8 +598,8 @@ const Dashboard = () => {
               </button>
             )}
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };
