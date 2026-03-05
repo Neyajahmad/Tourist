@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import io from 'socket.io-client';
 import axios from 'axios';
-import { motion } from 'framer-motion';
+import { motion, useAnimation, useDragControls } from 'framer-motion';
 import { Shield, MapPin, LogOut, Siren, User, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,6 +50,44 @@ const Dashboard = () => {
   }, []);
   const isMobile = viewport.w < 640;
   const isTablet = viewport.w < 1024;
+
+  const sheetControls = useAnimation();
+  const dragControls = useDragControls();
+  const [sheetState, setSheetState] = useState('half');
+
+  const snapPoints = {
+    full: 100,
+    half: viewport.h * 0.5,
+    collapsed: viewport.h - 140
+  };
+
+  useEffect(() => {
+    if (isMobile) {
+      sheetControls.start({ y: snapPoints[sheetState], transition: { type: 'spring', damping: 25, stiffness: 200 } });
+    }
+  }, [isMobile, viewport.h, sheetState, sheetControls]);
+
+  const onDragEnd = (event, info) => {
+    const offset = info.offset.y;
+    const velocity = info.velocity.y;
+
+    if (velocity > 500) {
+      if (sheetState === 'full') setSheetState('half');
+      else setSheetState('collapsed');
+    } else if (velocity < -500) {
+      if (sheetState === 'collapsed') setSheetState('half');
+      else setSheetState('full');
+    } else {
+      const currentY = snapPoints[sheetState] + offset;
+      const distToFull = Math.abs(currentY - snapPoints.full);
+      const distToHalf = Math.abs(currentY - snapPoints.half);
+      const distToCollapsed = Math.abs(currentY - snapPoints.collapsed);
+      const min = Math.min(distToFull, distToHalf, distToCollapsed);
+      if (min === distToFull) setSheetState('full');
+      else if (min === distToHalf) setSheetState('half');
+      else setSheetState('collapsed');
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -359,231 +397,245 @@ const Dashboard = () => {
 
       {/* Sidebar / Bottom Sheet */}
       <motion.div
-        initial={{ x: isMobile ? 0 : -100, y: isMobile ? 100 : 0 }}
-        animate={{ x: 0, y: 0 }}
+        initial={isMobile ? { y: viewport.h } : { x: -100, y: 0 }}
+        animate={isMobile ? sheetControls : { x: 0, y: 0 }}
+        style={isMobile ? { height: `${viewport.h - 60}px` } : {}}
+        drag={isMobile ? "y" : false}
+        dragControls={isMobile ? dragControls : undefined}
+        dragListener={false}
+        dragElastic={0.1}
+        dragConstraints={isMobile ? { top: snapPoints.full, bottom: snapPoints.collapsed } : undefined}
+        onDragEnd={isMobile ? onDragEnd : undefined}
         className={isMobile ? "mobile-bottom-sheet" : "sidebar sidebar-user"}
       >
-        <div>
-          {isMobile ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Bell size={24} color="#0f172a" />
-                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a' }}>User Dashboard</h2>
+        {isMobile && (
+          <div className="sheet-header-handle" onPointerDown={(e) => dragControls.start(e)}>
+            <div className="sheet-handle-bar" />
+          </div>
+        )}
+        <div className={isMobile ? "sheet-content" : ""}>
+          <div>
+            {isMobile ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Bell size={24} color="#0f172a" />
+                  <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#0f172a' }}>User Dashboard</h2>
+                </div>
+                <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  <LogOut size={24} color="#64748b" />
+                </button>
               </div>
-              <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <LogOut size={24} color="#64748b" />
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
-              <Shield size={32} color="#3B82F6" />
-              <h2 style={{ marginLeft: '12px', fontSize: '1.2rem', fontWeight: 'bold' }}>User Dashboard</h2>
-            </div>
-          )}
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
+                <Shield size={32} color="#3B82F6" />
+                <h2 style={{ marginLeft: '12px', fontSize: '1.2rem', fontWeight: 'bold' }}>User Dashboard</h2>
+              </div>
+            )}
 
-          {isMobile ? (
-            <div className="mobile-user-card">
-              <div className="mobile-user-avatar">
-                <User size={24} color="white" />
+            {isMobile ? (
+              <div className="mobile-user-card">
+                <div className="mobile-user-avatar">
+                  <User size={24} color="white" />
+                </div>
+                <div>
+                  <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>Welcome,</p>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{user?.name || 'Tourist'}</h3>
+                </div>
               </div>
-              <div>
-                <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>Welcome,</p>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{user?.name || 'Tourist'}</h3>
+            ) : (
+              <div style={{ marginBottom: '30px', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ background: '#3B82F6', padding: '8px', borderRadius: '50%' }}>
+                  <User size={20} color="white" />
+                </div>
+                <div>
+                  <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0 }}>Welcome,</p>
+                  <h3 style={{ margin: 0, fontSize: '1rem' }}>{user?.name || 'Tourist'}</h3>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div style={{ marginBottom: '30px', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ background: '#3B82F6', padding: '8px', borderRadius: '50%' }}>
-                <User size={20} color="white" />
-              </div>
-              <div>
-                <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0 }}>Welcome,</p>
-                <h3 style={{ margin: 0, fontSize: '1rem' }}>{user?.name || 'Tourist'}</h3>
-              </div>
-            </div>
-          )}
+            )}
 
-          <motion.div
-            animate={{ backgroundColor: getRiskColor() }}
-            style={{
-              padding: isMobile ? '16px' : '24px',
-              textAlign: 'center',
-              marginBottom: '20px',
-              borderRadius: isMobile ? '12px' : '20px',
-              color: 'white',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-            }}
-          >
-            <h4 style={{ margin: 0, opacity: 0.9, fontSize: isMobile ? '0.9rem' : '1rem' }}>Safety Status</h4>
-            <h1 style={{ margin: '4px 0', fontSize: isMobile ? '2.5rem' : '2.5rem', fontWeight: 'bold' }}>{risk.score}%</h1>
-            <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1rem', textTransform: 'uppercase' }}>{risk.label}</p>
-          </motion.div>
-          {warnings.length > 0 && (
-            <div style={{ marginBottom: '20px', padding: '12px', borderRadius: '16px', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)' }}>
-              <p style={{ margin: 0, fontWeight: 'bold' }}>Warnings</p>
-              {warnings.map(w => (
-                <p key={`${w.type}-${w.id}`} style={{ marginTop: '6px', fontSize: '0.9rem' }}>{w.message}</p>
-              ))}
-            </div>
-          )}
-          {adminNote && (
-            <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '16px', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.4)' }}>
-              <p style={{ margin: 0, fontWeight: 'bold' }}>Admin Message</p>
-              <p style={{ marginTop: '8px' }}>{adminNote.text}</p>
-              {adminNote.type === 'audio' && adminNote.audioSrc && (
-                <audio controls src={adminNote.audioSrc} style={{ width: '100%', marginTop: '8px' }} />
-              )}
-              <button onClick={() => setAdminNote(null)} style={{ marginTop: '10px', padding: '8px 12px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Dismiss</button>
-            </div>
-          )}
-          {/* Admin popup removed: admin replies appear in chat thread below */}
-        </div>
-
-        <div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleSOS}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              padding: '16px',
-              background: '#ef4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: isMobile ? '12px' : '16px',
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-              animation: 'pulse 2s infinite',
-              marginBottom: isMobile ? '12px' : '0'
-            }}
-          >
-            <Siren size={24} /> SOS ALERT
-          </motion.button>
-
-          {isMobile && (
-            <button
-              onClick={() => setSosOpen(!sosOpen)}
+            <motion.div
+              animate={{ backgroundColor: getRiskColor() }}
               style={{
-                width: '100%',
-                padding: '16px',
-                background: 'transparent',
-                color: '#0f172a',
-                border: '1px solid #cbd5e1',
-                borderRadius: '12px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer'
+                padding: isMobile ? '16px' : '24px',
+                textAlign: 'center',
+                marginBottom: '20px',
+                borderRadius: isMobile ? '12px' : '20px',
+                color: 'white',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
               }}
             >
-              Contact Admin
-            </button>
-          )}
-          {sosOpen && (
-            <div style={{ marginTop: '16px', padding: '16px', borderRadius: '16px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', display: 'flex', flexDirection: 'column' }}>
-              <p style={{ margin: 0, fontWeight: 'bold' }}>Contact Admin</p>
-              {chat.length > 0 && (
-                <div style={{ marginTop: '12px', maxHeight: chatListMaxH, overflowY: 'auto', paddingRight: '6px' }}>
-                  {chat.map((msg, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: msg.from === 'me' ? 'flex-end' : 'flex-start', marginTop: '6px' }}>
-                      <div style={{ maxWidth: '80%', padding: '8px 10px', borderRadius: '10px', background: msg.from === 'me' ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.2)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        {msg.type === 'text' ? <p style={{ margin: 0, fontSize: '0.9rem' }}>{msg.text}</p> : <audio controls src={msg.audioSrc} style={{ width: '100%' }} />}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div style={{ marginTop: '10px' }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <input value={msgText} onChange={(e) => setMsgText(e.target.value)} placeholder="Type message…" style={{ flex: 1, minWidth: 0, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: 'white' }} />
-                  <button onClick={() => {
-                    const t = msgText.trim();
-                    if (t) {
-                      socket.emit('userMessage', { fromUserId: user?.id, type: 'text', text: t });
-                      setChat(prev => [...prev, { from: 'me', type: 'text', text: t, time: Date.now() }].slice(-200));
-                      setMsgText('')
-                    }
-                  }} style={{ padding: '10px 14px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>Send Text</button>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-                  {!isRecording && (
-                    <button onClick={async () => {
-                      try {
-                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        sosStreamRef.current = stream;
-                        const rec = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-                        recRef.current = rec;
-                        sosChunksRef.current = [];
-                        sendOnStopRef.current = true;
-                        setRecPaused(false);
-                        setIsRecording(true);
-                        rec.ondataavailable = e => { if (e.data && e.data.size > 0) sosChunksRef.current.push(e.data) };
-                        rec.onstop = async () => {
-                          if (!sendOnStopRef.current) { cleanupSos(true); return; }
-                          try {
-                            const blob = new Blob(sosChunksRef.current, { type: 'audio/webm' });
-                            const buf = await blob.arrayBuffer();
-                            const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-                            socket.emit('userMessage', { fromUserId: user?.id, type: 'audio', audio: b64 });
-                          } catch (e) { }
-                          cleanupSos(false);
-                        };
-                        rec.start();
-                      } catch (e) { }
-                    }} style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.4)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', cursor: 'pointer' }}>Record Audio</button>
-                  )}
-                  {isRecording && (
-                    <>
-                      <button onClick={() => {
-                        try {
-                          if (recPaused) { recRef.current.resume(); setRecPaused(false) }
-                          else { recRef.current.pause(); setRecPaused(true) }
-                        } catch (e) { }
-                      }} style={{ padding: '10px 14px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>{recPaused ? 'Resume' : 'Pause'}</button>
-                      <button onClick={() => {
-                        try {
-                          sendOnStopRef.current = true;
-                          recRef.current.stop()
-                        } catch (e) { }
-                      }} style={{ padding: '10px 14px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Send Audio</button>
-                      <button onClick={() => {
-                        try {
-                          sendOnStopRef.current = false;
-                          if (recRef.current) recRef.current.stop(); else cleanupSos(true)
-                        } catch (e) { }
-                      }} style={{ padding: '10px 14px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
-                    </>
-                  )}
-                </div>
+              <h4 style={{ margin: 0, opacity: 0.9, fontSize: isMobile ? '0.9rem' : '1rem' }}>Safety Status</h4>
+              <h1 style={{ margin: '4px 0', fontSize: isMobile ? '2.5rem' : '2.5rem', fontWeight: 'bold' }}>{risk.score}%</h1>
+              <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1rem', textTransform: 'uppercase' }}>{risk.label}</p>
+            </motion.div>
+            {warnings.length > 0 && (
+              <div style={{ marginBottom: '20px', padding: '12px', borderRadius: '16px', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)' }}>
+                <p style={{ margin: 0, fontWeight: 'bold' }}>Warnings</p>
+                {warnings.map(w => (
+                  <p key={`${w.type}-${w.id}`} style={{ marginTop: '6px', fontSize: '0.9rem' }}>{w.message}</p>
+                ))}
               </div>
-            </div>
-          )}
+            )}
+            {adminNote && (
+              <div style={{ marginBottom: '20px', padding: '16px', borderRadius: '16px', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.4)' }}>
+                <p style={{ margin: 0, fontWeight: 'bold' }}>Admin Message</p>
+                <p style={{ marginTop: '8px' }}>{adminNote.text}</p>
+                {adminNote.type === 'audio' && adminNote.audioSrc && (
+                  <audio controls src={adminNote.audioSrc} style={{ width: '100%', marginTop: '8px' }} />
+                )}
+                <button onClick={() => setAdminNote(null)} style={{ marginTop: '10px', padding: '8px 12px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Dismiss</button>
+              </div>
+            )}
+            {/* Admin popup removed: admin replies appear in chat thread below */}
+          </div>
 
-          {!isMobile && (
-            <button
-              onClick={handleLogout}
+          <div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSOS}
               style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#94a3b8',
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                marginTop: '20px',
-                cursor: 'pointer',
-                width: '100%',
                 justifyContent: 'center',
-                padding: '10px'
+                gap: '10px',
+                padding: '16px',
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: isMobile ? '12px' : '16px',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
+                animation: 'pulse 2s infinite',
+                marginBottom: isMobile ? '12px' : '0'
               }}
             >
-              <LogOut size={18} /> Logout
-            </button>
-          )}
+              <Siren size={24} /> SOS ALERT
+            </motion.button>
+
+            {isMobile && (
+              <button
+                onClick={() => setSosOpen(!sosOpen)}
+                style={{
+                  width: '100%',
+                  padding: '16px',
+                  background: 'transparent',
+                  color: '#0f172a',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '12px',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Contact Admin
+              </button>
+            )}
+            {sosOpen && (
+              <div style={{ marginTop: '16px', padding: '16px', borderRadius: '16px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', display: 'flex', flexDirection: 'column' }}>
+                <p style={{ margin: 0, fontWeight: 'bold' }}>Contact Admin</p>
+                {chat.length > 0 && (
+                  <div style={{ marginTop: '12px', maxHeight: chatListMaxH, overflowY: 'auto', paddingRight: '6px' }}>
+                    {chat.map((msg, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: msg.from === 'me' ? 'flex-end' : 'flex-start', marginTop: '6px' }}>
+                        <div style={{ maxWidth: '80%', padding: '8px 10px', borderRadius: '10px', background: msg.from === 'me' ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.2)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          {msg.type === 'text' ? <p style={{ margin: 0, fontSize: '0.9rem' }}>{msg.text}</p> : <audio controls src={msg.audioSrc} style={{ width: '100%' }} />}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ marginTop: '10px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input value={msgText} onChange={(e) => setMsgText(e.target.value)} placeholder="Type message…" style={{ flex: 1, minWidth: 0, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(0,0,0,0.2)', color: 'white' }} />
+                    <button onClick={() => {
+                      const t = msgText.trim();
+                      if (t) {
+                        socket.emit('userMessage', { fromUserId: user?.id, type: 'text', text: t });
+                        setChat(prev => [...prev, { from: 'me', type: 'text', text: t, time: Date.now() }].slice(-200));
+                        setMsgText('')
+                      }
+                    }} style={{ padding: '10px 14px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>Send Text</button>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                    {!isRecording && (
+                      <button onClick={async () => {
+                        try {
+                          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                          sosStreamRef.current = stream;
+                          const rec = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                          recRef.current = rec;
+                          sosChunksRef.current = [];
+                          sendOnStopRef.current = true;
+                          setRecPaused(false);
+                          setIsRecording(true);
+                          rec.ondataavailable = e => { if (e.data && e.data.size > 0) sosChunksRef.current.push(e.data) };
+                          rec.onstop = async () => {
+                            if (!sendOnStopRef.current) { cleanupSos(true); return; }
+                            try {
+                              const blob = new Blob(sosChunksRef.current, { type: 'audio/webm' });
+                              const buf = await blob.arrayBuffer();
+                              const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+                              socket.emit('userMessage', { fromUserId: user?.id, type: 'audio', audio: b64 });
+                            } catch (e) { }
+                            cleanupSos(false);
+                          };
+                          rec.start();
+                        } catch (e) { }
+                      }} style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.4)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '8px', cursor: 'pointer' }}>Record Audio</button>
+                    )}
+                    {isRecording && (
+                      <>
+                        <button onClick={() => {
+                          try {
+                            if (recPaused) { recRef.current.resume(); setRecPaused(false) }
+                            else { recRef.current.pause(); setRecPaused(true) }
+                          } catch (e) { }
+                        }} style={{ padding: '10px 14px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>{recPaused ? 'Resume' : 'Pause'}</button>
+                        <button onClick={() => {
+                          try {
+                            sendOnStopRef.current = true;
+                            recRef.current.stop()
+                          } catch (e) { }
+                        }} style={{ padding: '10px 14px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Send Audio</button>
+                        <button onClick={() => {
+                          try {
+                            sendOnStopRef.current = false;
+                            if (recRef.current) recRef.current.stop(); else cleanupSos(true)
+                          } catch (e) { }
+                        }} style={{ padding: '10px 14px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!isMobile && (
+              <button
+                onClick={handleLogout}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  marginTop: '20px',
+                  cursor: 'pointer',
+                  width: '100%',
+                  justifyContent: 'center',
+                  padding: '10px'
+                }}
+              >
+                <LogOut size={18} /> Logout
+              </button>
+            )}
+          </div>
         </div>
       </motion.div>
     </div>

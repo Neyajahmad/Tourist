@@ -246,19 +246,52 @@ body {
 
   .mobile-bottom-sheet {
     position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
     width: 100%;
     background: white;
     color: #0f172a;
-    border-radius: 30px 30px 0 0;
-    padding: 24px;
-    z-index: 10;
-    max-height: 60vh;
-    overflow-y: auto;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+    border-radius: 24px 24px 0 0;
+    z-index: 20;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
+    pointer-events: auto;
+  }
+
+  .sheet-header-handle {
+    width: 100%;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: grab;
+    background: transparent;
+    touch-action: none;
+    /* Prevent scroll interference */
+  }
+
+  .sheet-header-handle:active {
+    cursor: grabbing;
+  }
+
+  .sheet-handle-bar {
+    width: 40px;
+    height: 5px;
+    background: #cbd5e1;
+    border-radius: 3px;
+    margin-bottom: 12px;
+  }
+
+  .sheet-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 24px 24px 24px;
+    scrollbar-width: none;
+  }
+
+  .sheet-content::-webkit-scrollbar {
+    display: none;
   }
 
   /* User Info Card styled exactly like the provided screenshot */
