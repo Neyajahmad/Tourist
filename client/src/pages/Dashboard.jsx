@@ -281,7 +281,7 @@ const Dashboard = () => {
     <div className="dashboard-container" style={{ flexDirection: isMobile ? 'column' : 'row' }}>
 
       {isMobile && (
-        <div>
+        <div style={{ flexShrink: 0 }}>
           <div className="mobile-admin-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Shield size={24} color="#3B82F6" />
@@ -298,7 +298,7 @@ const Dashboard = () => {
 
       {/* Main Map Area */}
       {(!isMobile || activeTab === 'map') && (
-        <div className="map-wrapper map-wrapper-user" style={isMobile ? { position: 'relative', height: 'calc(100vh - 120px)', zIndex: 0, margin: 0, top: 0, left: 0, flex: 1, display: 'flex', flexDirection: 'column' } : {}}>
+        <div className="map-wrapper map-wrapper-user" style={isMobile ? { position: 'relative', zIndex: 0, margin: 0, top: 0, left: 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 } : {}}>
           <div style={{ flex: 1, borderRadius: isMobile ? '0' : '24px', overflow: 'hidden', border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
             <MapContainer center={[location.lat, location.lng]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={!isMobile}>
               <TileLayer
@@ -328,20 +328,27 @@ const Dashboard = () => {
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="floating-stats"
-            style={isMobile ? { top: 'auto', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: '400px', display: 'flex', justifyContent: 'space-evenly', padding: '12px', zIndex: 1000, position: 'absolute' } : {}}
+            style={isMobile ? { top: 'auto', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '92%', maxWidth: '400px', padding: '12px', zIndex: 1000, position: 'absolute' } : {}}
           >
             {isMobile ? (
-              <>
-                <div style={{ textAlign: 'center', flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Speed</p>
-                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.9rem' }}>{speedKmh.toFixed(1)} km/h</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', width: '100%' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b' }}>Speed</p>
+                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.85rem' }}>{speedKmh.toFixed(1)} km/h</p>
                 </div>
-                <div className="stat-divider"></div>
-                <div style={{ textAlign: 'center', flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Nearest Landmark</p>
-                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nearestLandmark ? nearestLandmark.name : '--'}</p>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b' }}>Landmark</p>
+                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nearestLandmark ? nearestLandmark.name : '--'}</p>
                 </div>
-              </>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b' }}>Lat</p>
+                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.85rem' }}>{location.lat.toFixed(4)}</p>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b' }}>Lng</p>
+                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '0.85rem' }}>{location.lng.toFixed(4)}</p>
+                </div>
+              </div>
             ) : (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
