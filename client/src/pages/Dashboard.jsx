@@ -298,8 +298,8 @@ const Dashboard = () => {
 
       {/* Main Map Area */}
       {(!isMobile || activeTab === 'map') && (
-        <div className="map-wrapper map-wrapper-user" style={isMobile ? { position: 'relative', height: 'calc(100vh - 100px)', zIndex: 0, margin: 0, top: 0, left: 0 } : {}}>
-          <div style={{ height: '100%', borderRadius: isMobile ? '0' : '24px', overflow: 'hidden', border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="map-wrapper map-wrapper-user" style={isMobile ? { position: 'relative', height: 'calc(100vh - 120px)', zIndex: 0, margin: 0, top: 0, left: 0, flex: 1, display: 'flex', flexDirection: 'column' } : {}}>
+          <div style={{ flex: 1, borderRadius: isMobile ? '0' : '24px', overflow: 'hidden', border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
             <MapContainer center={[location.lat, location.lng]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={!isMobile}>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -328,6 +328,7 @@ const Dashboard = () => {
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="floating-stats"
+            style={isMobile ? { top: 'auto', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: '400px', display: 'flex', justifyContent: 'space-evenly', padding: '12px', zIndex: 1000, position: 'absolute' } : {}}
           >
             {isMobile ? (
               <>
