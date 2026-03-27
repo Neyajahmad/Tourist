@@ -1,0 +1,234 @@
+/* Admin Dashboard Styles */
+
+.admin-dashboard-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: #0f172a;
+  color: white;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Pulse animation for SOS indicators */
+@keyframes pulse-icon {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.15);
+  }
+}
+
+.pulse-icon {
+  animation: pulse-icon 1.5s ease-in-out infinite;
+}
+
+/* Desktop Layout - Keep unchanged */
+@media (min-width: 769px) {
+  .admin-dashboard-layout {
+    flex-direction: row;
+  }
+  
+  .admin-left-sidebar {
+    width: 380px;
+    height: 100%;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .admin-center-panel {
+    flex: 1;
+    position: relative;
+  }
+  
+  .admin-right-panel {
+    width: 400px;
+    height: 100%;
+  }
+}
+
+/* Mobile Layout - Enhanced */
+@media (max-width: 768px) {
+  .admin-dashboard-layout {
+    flex-direction: column;
+  }
+  
+  .admin-left-sidebar {
+    width: 100% !important;
+    height: auto;
+    max-height: calc(100vh - 60px);
+    border-right: none !important;
+    overflow-y: auto;
+  }
+  
+  .admin-center-panel {
+    width: 100%;
+    height: calc(100vh - 60px);
+    border-right: none !important;
+  }
+  
+  .admin-right-panel {
+    display: none; /* Hide right panel on mobile */
+  }
+  
+  /* Mobile Tab Navigation */
+  .mobile-tab-nav {
+    display: flex;
+    justify-content: space-around;
+    background: #1e293b;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .mobile-tab {
+    flex: 1;
+    padding: 14px 8px;
+    text-align: center;
+    font-weight: 600;
+    color: #6b7280;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    transition: all 0.2s;
+  }
+  
+  .mobile-tab.active {
+    border-bottom-color: currentColor;
+  }
+  
+  /* Scrollable content areas */
+  .tab-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Chat input sticky at bottom */
+  .chat-input-container {
+    position: sticky;
+    bottom: 0;
+    background: #0f172a;
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Messages scrollable */
+  .messages-container {
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+    padding: 15px;
+  }
+  
+  /* Map full height on mobile */
+  .leaflet-container {
+    height: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Touch-friendly buttons on mobile */
+@media (max-width: 768px) {
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  input, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Mobile Alert Modal */
+.alert-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.alert-modal-content {
+  background: #0f172a;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile: Hide SOS alerts from other tabs */
+@media (max-width: 768px) {
+  /* Ensure SOS alerts only show in SOS tab */
+  .mobile-sos-only {
+    display: none;
+  }
+  
+  /* Collapsible location sections */
+  .location-header {
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .location-header:active {
+    transform: scale(0.98);
+  }
+}
+

@@ -1,0 +1,36 @@
+[
+  { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "incidentId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "reporter", "type": "address" },
+      { "indexed": false, "internalType": "string", "name": "location", "type": "string" }
+    ],
+    "name": "IncidentReported",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "incidentId", "type": "uint256" },
+      { "indexed": false, "internalType": "bool", "name": "verified", "type": "bool" }
+    ],
+    "name": "IncidentVerified",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "touristAddress", "type": "address" },
+      { "indexed": false, "internalType": "string", "name": "name", "type": "string" }
+    ],
+    "name": "TouristRegistered",
+    "type": "event"
+  },
+  { "inputs": [], "name": "admin", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [{ "internalType": "string", "name": "_name", "type": "string" }, { "internalType": "string", "name": "_identityHash", "type": "string" }], "name": "registerTourist", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "string", "name": "_location", "type": "string" }, { "internalType": "string", "name": "_details", "type": "string" }], "name": "reportIncident", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256", "name": "_incidentId", "type": "uint256" }], "name": "verifyIncident", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [], "name": "getIncidentCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }
+]
