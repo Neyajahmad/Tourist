@@ -44,4 +44,8 @@ venv/
 .venv/
 env/
 
+# Video files (hosted on Cloudinary)
 *.mp4
+*.mov
+*.avi
+*.webm

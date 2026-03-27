@@ -87,7 +87,7 @@ const Landing = () => {
           transition: 'opacity 0.5s ease-in-out'
         }}
       >
-        <source src="/homescreen.mp4" type="video/mp4" />
+        <source src="https://res.cloudinary.com/dxvnpfwqm/video/upload/f_mp4/v1774654521/homescreen_phjodv.mov" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       
@@ -165,7 +165,7 @@ const Landing = () => {
         left: 0,
         width: '100%',
         height: '100%',
-        background: 'rgba(0, 0, 0, 0.5)',
+        background: 'rgba(0, 0, 0, 0.4)',
         zIndex: 2
       }} />
 

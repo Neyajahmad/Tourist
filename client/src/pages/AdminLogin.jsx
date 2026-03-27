@@ -129,7 +129,7 @@ const AdminLogin = () => {
           transition: 'opacity 0.5s ease-in-out'
         }}
       >
-        <source src="/admin.mp4" type="video/mp4" />
+        <source src="https://res.cloudinary.com/dxvnpfwqm/video/upload/f_mp4/v1774654512/admin_chje9w.mov" type="video/mp4" />
       </video>
 
       {/* Loading State */}
@@ -196,7 +196,7 @@ const AdminLogin = () => {
         left: 0,
         width: '100%',
         height: '100%',
-        background: 'rgba(15, 23, 42, 0.65)',
+        background: 'rgba(0, 0, 0, 0.4)',
         zIndex: 2
       }} />
 

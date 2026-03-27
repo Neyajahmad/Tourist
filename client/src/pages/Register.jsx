@@ -102,7 +102,7 @@ const Register = () => {
           transition: 'opacity 0.5s ease-in-out'
         }}
       >
-        <source src="/userlogin.mp4" type="video/mp4" />
+        <source src="https://res.cloudinary.com/dxvnpfwqm/video/upload/v1774654512/userlogin_hxdagi.mp4" type="video/mp4" />
       </video>
 
       {/* Loading State */}
@@ -169,7 +169,7 @@ const Register = () => {
         left: 0,
         width: '100%',
         height: '100%',
-        background: 'rgba(15, 23, 42, 0.85)',
+        background: 'rgba(0, 0, 0, 0.4)',
         zIndex: 2
       }} />
 
