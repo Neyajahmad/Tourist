@@ -85,6 +85,7 @@ const Dashboard = () => {
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [msgText, setMsgText] = useState('');
   const [chat, setChat] = useState([]);
+  const messagesEndRef = useRef(null);
   const recRef = useRef(null);
   const sosChunksRef = useRef([]);
   const sosStreamRef = useRef(null);
@@ -399,6 +400,22 @@ const Dashboard = () => {
 
   const chatListMaxH = isMobile ? '28vh' : '300px';
 
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chat]);
+
+  const handleSendMessage = () => {
+    const t = msgText.trim();
+    if (t) {
+      socket.emit('userMessage', { fromUserId: user?.id, type: 'text', text: t });
+      setChat(prev => [...prev, { from: 'me', type: 'text', text: t, time: Date.now() }].slice(-200));
+      setMsgText('');
+    }
+  };
+
   return (
     <div className="main-dashboard">
       {/* Modal Components */}
@@ -598,21 +615,24 @@ const Dashboard = () => {
                 No active messages. Admin will contact you here in case of SOS.
               </div>
             ) : (
-              chat.map((msg, idx) => (
-                <div key={idx} className={`message ${msg.from === 'me' ? 'user' : 'admin'}`}>
-                  {msg.type === 'text' ? (
-                    <p>{msg.text}</p>
-                  ) : (
-                    <div className="audio-message">
-                      <Play size={14} fill="currentColor" />
-                      <audio controls src={msg.audioSrc} />
+              <>
+                {chat.map((msg, idx) => (
+                  <div key={idx} className={`message ${msg.from === 'me' ? 'user' : 'admin'}`}>
+                    {msg.type === 'text' ? (
+                      <p>{msg.text}</p>
+                    ) : (
+                      <div className="audio-message">
+                        <Play size={14} fill="currentColor" />
+                        <audio controls src={msg.audioSrc} />
+                      </div>
+                    )}
+                    <div className="message-time">
+                      {new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
-                  )}
-                  <div className="message-time">
-                    {new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
-                </div>
-              ))
+                ))}
+                <div ref={messagesEndRef} />
+              </>
             )}
           </div>
 
@@ -622,26 +642,19 @@ const Dashboard = () => {
                 className="chat-input"
                 value={msgText}
                 onChange={(e) => setMsgText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (async () => {
-                  const t = msgText.trim();
-                  if (t) {
-                    socket.emit('userMessage', { fromUserId: user?.id, type: 'text', text: t });
-                    setChat(prev => [...prev, { from: 'me', type: 'text', text: t, time: Date.now() }].slice(-200));
-                    setMsgText('');
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
                   }
-                })()}
+                }}
                 placeholder="Type message..."
               />
               <button
                 className="icon-btn send"
-                onClick={() => {
-                  const t = msgText.trim();
-                  if (t) {
-                    socket.emit('userMessage', { fromUserId: user?.id, type: 'text', text: t });
-                    setChat(prev => [...prev, { from: 'me', type: 'text', text: t, time: Date.now() }].slice(-200));
-                    setMsgText('');
-                  }
-                }}
+                onClick={handleSendMessage}
+                disabled={!msgText.trim()}
+                style={{ opacity: msgText.trim() ? 1 : 0.5 }}
               >
                 <Send size={18} />
               </button>
@@ -682,10 +695,13 @@ const Dashboard = () => {
                         cleanupSos(false);
                       };
                       rec.start();
-                    } catch (e) { }
+                    } catch (e) {
+                      console.error('Microphone access denied:', e);
+                      alert('Microphone access is required for voice messages');
+                    }
                   }}
                 >
-                  <Mic size={18} /> 🎤
+                  <Mic size={18} /> Record Voice
                 </button>
               ) : (
                 <div className="recording-controls">
@@ -703,7 +719,7 @@ const Dashboard = () => {
                       recRef.current.stop()
                     } catch (e) { }
                   }}>
-                    Send
+                    <Send size={16} /> Send
                   </button>
                   <button className="icon-btn danger" onClick={() => {
                     try {
