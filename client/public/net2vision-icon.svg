@@ -1,0 +1,27 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield Background -->
+  <path d="M32 4L8 14V28C8 42.5 16.5 55.5 32 60C47.5 55.5 56 42.5 56 28V14L32 4Z" fill="url(#gradient1)"/>
+  
+  <!-- Network Lines -->
+  <path d="M32 20L24 26L28 34L32 30L36 34L40 26L32 20Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6"/>
+  
+  <!-- Eye/Vision Symbol -->
+  <ellipse cx="32" cy="32" rx="12" ry="8" stroke="white" stroke-width="2.5" fill="none"/>
+  <circle cx="32" cy="32" r="4" fill="white"/>
+  <circle cx="32" cy="32" r="2" fill="#3B82F6"/>
+  
+  <!-- Network Nodes -->
+  <circle cx="24" cy="26" r="2" fill="white"/>
+  <circle cx="40" cy="26" r="2" fill="white"/>
+  <circle cx="28" cy="34" r="2" fill="white"/>
+  <circle cx="36" cy="34" r="2" fill="white"/>
+  
+  <!-- Gradient Definition -->
+  <defs>
+    <linearGradient id="gradient1" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="50%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+</svg>

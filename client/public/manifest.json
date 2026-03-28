@@ -1,0 +1,26 @@
+{
+  "name": "Net2Vision - Tourist Safety Platform",
+  "short_name": "Net2Vision",
+  "description": "AI-powered safety companion for secure travel with real-time emergency support",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/net2vision-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/net2vision-icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["travel", "safety", "utilities"],
+  "screenshots": []
+}
