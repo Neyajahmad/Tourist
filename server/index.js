@@ -11,7 +11,17 @@ dotenv.config()
 
 const app = express()
 const server = http.createServer(app)
-const io = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'] } })
+// const io = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'] } })
+
+const io = new Server(server, { 
+  cors: { 
+    origin: '*', 
+    methods: ['GET', 'POST'] 
+  },
+  transports: ['websocket', 'polling'],
+  allowEIO3: true
+})
+
 
 app.use(cors())
 app.use(express.json())
