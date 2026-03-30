@@ -26,6 +26,15 @@ const io = new Server(server, {
 app.use(cors())
 app.use(express.json())
 
+// Global HEAD request handler (MUST be before routes)
+// This ensures UptimeRobot and other monitoring tools work correctly
+app.use((req, res, next) => {
+  if (req.method === 'HEAD') {
+    return res.status(200).end()
+  }
+  next()
+})
+
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/tourist_safety')
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log(err))
