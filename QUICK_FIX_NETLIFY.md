@@ -1,15 +1,34 @@
 # 🚀 Quick Fix: Netlify Google Maps Error
 
 ## The Problem
-Your production site shows: **"InvalidKeyMapError"**
 
-The API key shows as: `YOUR_GOOGLE_MAPS_API_KEY` (placeholder not replaced)
+**Two issues:**
+1. ❌ Node.js version too old (18.20.8) - Vite needs 20.19+
+2. ❌ Google Maps API key not injected (shows "YOUR_GOOGLE_MAPS_API_KEY")
+
+**Error:**
+```
+You are using Node.js 18.20.8. Vite requires Node.js version 20.19+ or 22.12+
+```
 
 ---
 
 ## ⚡ Quick Fix (5 minutes)
 
-### Step 1: Add Environment Variables to Netlify
+### Step 1: Update Node.js Version
+
+I've updated `netlify.toml` to use Node.js 20.
+
+**Commit and push:**
+```bash
+git add netlify.toml
+git commit -m "Fix Node.js version for Netlify build"
+git push origin main
+```
+
+Netlify will auto-deploy with Node.js 20.
+
+### Step 2: Add Environment Variables to Netlify
 
 1. Go to: https://app.netlify.com/
 2. Click your site: **touristsafety**
@@ -17,7 +36,7 @@ The API key shows as: `YOUR_GOOGLE_MAPS_API_KEY` (placeholder not replaced)
 4. Click: **Environment variables** (left sidebar)
 5. Click: **Add a variable**
 
-### Step 2: Add These Variables
+### Step 3: Add These Variables
 
 **Variable 1:**
 ```
@@ -33,14 +52,14 @@ Value: https://tourist-vh25.onrender.com
 
 Click **Create variable** for each.
 
-### Step 3: Redeploy
+### Step 4: Redeploy
 
 1. Go to: **Deploys** tab
 2. Click: **Trigger deploy** button
 3. Select: **Deploy site**
 4. Wait 2-3 minutes
 
-### Step 4: Test
+### Step 5: Test
 
 Open: https://touristsafety.netlify.app/dashboard
 

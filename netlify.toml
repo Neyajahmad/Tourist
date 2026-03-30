@@ -4,7 +4,7 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
 
 # Environment variables are set in Netlify dashboard
 # VITE_GOOGLE_MAPS_API_KEY = your_actual_key
