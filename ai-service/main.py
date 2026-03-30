@@ -24,6 +24,10 @@ class RiskRequest(BaseModel):
 def home():
     return {"message": "AI Risk Detection Service Running"}
 
+@app.head("/")
+def head_home():
+    return None
+
 @app.post("/predict")
 def predict_risk(data: RiskRequest):
     if model is None:
