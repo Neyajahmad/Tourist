@@ -15,12 +15,6 @@
   height: 100%;
 }
 
-.leaflet-container {
-  height: 100% !important;
-  width: 100% !important;
-  background: #0f172a;
-}
-
 .loading-map {
   height: 100%;
   width: 100%;

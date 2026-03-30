@@ -1,34 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Siren, User, MapPin, Activity, CheckCircle, XCircle, MessageSquare, Users, Settings, LogOut, ChevronRight, Phone, Clock, AlertTriangle, Mic, Square, Play, Pause, Trash2 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import GoogleMapWrapper from '../components/GoogleMapWrapper';
 import io from 'socket.io-client';
 import axios from 'axios';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
 
-// Fix Leaflet Icon
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 const socket = io(API_BASE);
-
-// Red Pulse Icon for SOS
-const sosIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
 
 const AdminDashboard = () => {
   const [alerts, setAlerts] = useState([]);
@@ -60,6 +40,8 @@ const AdminDashboard = () => {
   const [viewport, setViewport] = useState({ w: window.innerWidth, h: window.innerHeight });
   const [mobileMapCenter, setMobileMapCenter] = useState([22.9734, 78.6569]);
   const [mobileMapZoom, setMobileMapZoom] = useState(5);
+  const [mapCenter, setMapCenter] = useState({ lat: 22.9734, lng: 78.6569 });
+  const [mapZoom, setMapZoom] = useState(5);
   const [expandedLocations, setExpandedLocations] = useState({});
   const [alertModalOpen, setAlertModalOpen] = useState(false);
   const [modalAlert, setModalAlert] = useState(null);
@@ -199,15 +181,20 @@ const AdminDashboard = () => {
     setFocusUserId(user._id);
     setSelectedAlert(null);
     
-    // For mobile: if user has location and is from Users tab, switch to map tab
-    if (isMobile && activeTab === 'users' && userLocations[user._id]) {
+    // Update map center to user's location if available
+    if (userLocations[user._id]) {
       const loc = userLocations[user._id];
-      setMobileMapCenter([loc.lat, loc.lng]);
-      setMobileMapZoom(15);
-      setActiveTab('map');
+      setMapCenter({ lat: loc.lat, lng: loc.lng });
+      setMapZoom(16);
+      
+      // For mobile: switch to map tab to show location
+      if (isMobile) {
+        setMobileMapCenter([loc.lat, loc.lng]);
+        setMobileMapZoom(16);
+        setActiveTab('map');
+      }
     }
-    // For mobile: if from Chat tab, stay in chat (don't switch to map)
-    // Desktop behavior unchanged
+    // Note: Does NOT switch to chat tab - only shows location on map
   };
 
   const handleAlertSelect = (alert) => {
@@ -215,11 +202,31 @@ const AdminDashboard = () => {
     setFocusUserId(alert.userId);
     setSelectedUser(users.find(u => u._id === alert.userId) || null);
     
+    // Update map center for alert
+    setMapCenter({ lat: alert.location.lat, lng: alert.location.lng });
+    setMapZoom(16);
+    
     // For mobile: also show in chat tab with SOS alert card
     if (isMobile) {
       setActiveTab('chat');
     }
   };
+
+  // Update map center when selectedAlert or focusUserId changes
+  useEffect(() => {
+    if (isMobile && activeTab === 'map') {
+      // On mobile, use mobileMapCenter and mobileMapZoom
+      setMapCenter({ lat: mobileMapCenter[0], lng: mobileMapCenter[1] });
+      setMapZoom(mobileMapZoom);
+    } else if (selectedAlert) {
+      setMapCenter({ lat: selectedAlert.location.lat, lng: selectedAlert.location.lng });
+      setMapZoom(16);
+    } else if (focusUserId && userLocations[focusUserId]) {
+      const loc = userLocations[focusUserId];
+      setMapCenter({ lat: loc.lat, lng: loc.lng });
+      setMapZoom(16);
+    }
+  }, [selectedAlert, focusUserId, userLocations, isMobile, activeTab, mobileMapCenter, mobileMapZoom]);
 
   const handleAdminLogout = () => {
     localStorage.removeItem('token');
@@ -406,6 +413,54 @@ const AdminDashboard = () => {
     alert(`Broadcast sent to ${broadcastTarget.type === 'all' ? 'all users' : `users in ${broadcastTarget.area}`}`);
     setBroadcastMsg('');
   };
+
+  // Convert userLocations + alerts to markers for GoogleMapWrapper
+  const markers = useMemo(() => {
+    const result = [];
+    
+    // Add SOS alert markers (type: 'sos')
+    alerts.forEach(alert => {
+      result.push({
+        id: `sos-${alert.userId}`,
+        position: { lat: alert.location.lat, lng: alert.location.lng },
+        type: 'sos',
+        label: alert.userName,
+        infoContent: `<div style="padding:8px;color:#0f172a"><strong>SOS: ${alert.userName}</strong><br/>${alert.area}<br/>Time: ${new Date(alert.time).toLocaleTimeString()}</div>`,
+        onClick: () => handleAlertSelect(alert)
+      });
+    });
+    
+    // Add tourist markers (type: 'tourist')
+    Object.entries(userLocations).forEach(([uid, loc]) => {
+      const user = users.find(u => u._id === uid);
+      const name = user?.name || 'Unknown';
+      result.push({
+        id: `user-${uid}`,
+        position: { lat: loc.lat, lng: loc.lng },
+        type: 'tourist',
+        label: name,
+        infoContent: `<div style="padding:8px;color:#0f172a"><strong>${name}</strong><br/>ID: ${uid.substring(0, 8)}...</div>`,
+        onClick: () => {
+          if (user) handleUserSelect(user);
+        }
+      });
+    });
+    
+    return result;
+  }, [alerts, userLocations, users]);
+  
+  // Convert trails to polylines for GoogleMapWrapper
+  const polylines = useMemo(() => {
+    return Object.entries(trails)
+      .filter(([uid, trail]) => trail.length >= 2)
+      .map(([uid, trail]) => ({
+        id: `trail-${uid}`,
+        path: trail.map(([lat, lng]) => ({ lat, lng })),
+        color: '#3B82F6',
+        weight: 3,
+        opacity: 0.7,
+      }));
+  }, [trails]);
 
   const groupedAlerts = alerts
     .filter(alert => alert.status !== 'resolved') // Only show non-resolved alerts
@@ -981,68 +1036,19 @@ const AdminDashboard = () => {
         width: isMobile ? '100%' : 'auto',
         height: isMobile ? 'calc(100vh - 60px)' : '100%'
       }}>
-        <MapContainer
-          center={[22.9734, 78.6569]}
-          zoom={5}
-          minZoom={5}
-          maxZoom={18}
-          maxBounds={[[6.4627, 68.1097], [35.5133, 97.3956]]}
-          maxBoundsViscosity={1.0}
+        <GoogleMapWrapper
+          center={mapCenter}
+          zoom={mapZoom}
+          markers={markers}
+          polylines={polylines}
+          enableClustering={true}
+          clusteringThreshold={50}
+          isMobile={isMobile}
           style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer
-            attribution='&copy; OpenStreetMap contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            noWrap={true}
-          />
-
-          {/* Show Alert Markers */}
-          {alerts.map(alert => (
-            <Marker key={alert.id} position={[alert.location.lat, alert.location.lng]} icon={sosIcon}>
-              <Popup>
-                <div style={{ color: '#0f172a' }}>
-                  <strong>SOS: {alert.userName}</strong> <br />
-                  {alert.area} <br />
-                  Time: {new Date(alert.time).toLocaleTimeString()}
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-
-          {/* Live Active Users */}
-          {Object.entries(userLocations).map(([uid, loc]) => {
-            const user = users.find(u => u._id === uid);
-            const name = user?.name || 'Unknown';
-            const trail = trails[uid] || [];
-            return (
-              <React.Fragment key={`user-${uid}`}>
-                <Marker position={[loc.lat, loc.lng]}>
-                  <Popup>
-                    <div style={{ color: '#0f172a' }}>
-                      <strong>{name}</strong><br />
-                      ID: {uid.substring(0, 8)}...<br />
-                    </div>
-                  </Popup>
-                </Marker>
-                {trail.length >= 2 && (
-                  <Polyline positions={trail} pathOptions={{ color: '#3B82F6', weight: 3, opacity: 0.7 }} />
-                )}
-              </React.Fragment>
-            )
-          })}
-
-          <MapUpdater 
-            selectedAlert={selectedAlert} 
-            focusUser={focusUserId ? userLocations[focusUserId] : null} 
-            activeTab={activeTab} 
-            isMobile={isMobile}
-            mobileMapCenter={mobileMapCenter}
-            mobileMapZoom={mobileMapZoom}
-          />
-        </MapContainer>
+        />
 
         {/* Map Overlay Status */}
-        <div style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(15, 23, 42, 0.8)', padding: '10px 15px', borderRadius: '12px', backdropFilter: 'blur(10px)', zIndex: 1000, border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '80px', background: 'rgba(15, 23, 42, 0.8)', padding: '10px 15px', borderRadius: '12px', backdropFilter: 'blur(10px)', zIndex: 1000, border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }}></div>
           <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>SYSTEM ONLINE: {activeUsers.length} TOURISTS</span>
         </div>
@@ -1442,37 +1448,5 @@ const AdminDashboard = () => {
     </div>
   );
 };
-
-// Component to fly map to selected alert or user
-function MapUpdater({ selectedAlert, focusUser, activeTab, isMobile, mobileMapCenter, mobileMapZoom }) {
-  const map = useMap();
-  const lastPosRef = useRef(null);
-
-  useEffect(() => {
-    if (isMobile && activeTab === 'map') {
-      // On mobile, use mobileMapCenter and mobileMapZoom
-      map.setView(mobileMapCenter, mobileMapZoom);
-    } else if (selectedAlert) {
-      map.flyTo([selectedAlert.location.lat, selectedAlert.location.lng], 16);
-    } else if (focusUser) {
-      // Only flyTo if the user has moved significantly or it's a new selection
-      const dist = lastPosRef.current ? Math.sqrt(Math.pow(focusUser.lat - lastPosRef.current.lat, 2) + Math.pow(focusUser.lng - lastPosRef.current.lng, 2)) : 1;
-      
-      if (dist > 0.0001) { // roughly 10 meters
-        map.flyTo([focusUser.lat, focusUser.lng], 16, { duration: 1.5 });
-        lastPosRef.current = focusUser;
-      }
-    }
-  }, [selectedAlert, focusUser, map, isMobile, activeTab, mobileMapCenter, mobileMapZoom]);
-
-  useEffect(() => {
-    // Force recalculate map size on tab/view changes
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
-  }, [activeTab, map]);
-
-  return null;
-}
 
 export default AdminDashboard;

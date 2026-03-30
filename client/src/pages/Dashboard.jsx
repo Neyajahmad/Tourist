@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Circle } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, MapPin, LogOut, Siren, User, Bell, Activity, MessageSquare, Mic, Square, Play, Pause, Trash2, Send, Navigation, Info, ChevronRight, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import GoogleMapWrapper from '../components/GoogleMapWrapper';
 import RestrictedAreaModal from '../components/RestrictedAreaModal';
 import DisclaimerModal from '../components/DisclaimerModal';
 import SOSModal from '../components/SOSModal';
@@ -50,14 +48,6 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
   return R * c;
 };
 
-// Fix Leaflet Icon
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 const socket = io(API_BASE);
 
@@ -73,7 +63,21 @@ const Dashboard = () => {
     }
   });
   const [risk, setRisk] = useState({ label: 'Safe', score: 0 });
-  const [location, setLocation] = useState({ lat: 28.6139, lng: 77.2090 });
+  const [location, setLocation] = useState(() => {
+    // Try to get stored location immediately for faster initial render
+    const storedLat = parseFloat(localStorage.getItem('initialLat'));
+    const storedLng = parseFloat(localStorage.getItem('initialLng'));
+    if (!isNaN(storedLat) && !isNaN(storedLng)) {
+      return { lat: storedLat, lng: storedLng };
+    }
+    return null;
+  });
+  const [isLoadingLocation, setIsLoadingLocation] = useState(() => {
+    // If we have stored location, don't show loading screen
+    const storedLat = parseFloat(localStorage.getItem('initialLat'));
+    const storedLng = parseFloat(localStorage.getItem('initialLng'));
+    return isNaN(storedLat) || isNaN(storedLng);
+  });
   console.log("Current Location State:", location);
   const [adminNote, setAdminNote] = useState(null);
   const [sosOpen, setSosOpen] = useState(false);
@@ -112,6 +116,58 @@ const Dashboard = () => {
 
   const [activeTab, setActiveTab] = useState('map');
 
+  // Task 4.2: Convert location state to markers prop format
+  const markers = useMemo(() => {
+    if (!location) return [];
+    return [{
+      id: 'user',
+      position: location,
+      type: 'user',
+      label: 'You',
+      infoContent: `<div style="padding:8px;color:#0f172a;font-weight:600;">
+        <div style="font-size:14px;margin-bottom:4px;">📍 Your Location</div>
+        <div style="font-size:12px;color:#64748b;">${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}</div>
+      </div>`,
+    }];
+  }, [location]);
+
+  // Task 4.3: Convert path array to polylines prop format
+  const polylines = useMemo(() => {
+    if (path.length < 2) return [];
+    return [{
+      id: 'user-trail',
+      path: path.map(([lat, lng]) => ({ lat, lng })),
+      color: '#3B82F6',
+      weight: 4,
+      opacity: 0.7,
+    }];
+  }, [path]);
+
+  // Task 4.6: Convert geoData zones to circles prop format
+  const circles = useMemo(() => {
+    if (!location) return [];
+    return [
+      ...(geoData.restrictedZones || []).map(z => ({
+        id: `restricted-${z.id}`,
+        center: z.center,
+        radius: z.radius,
+        fillColor: '#f59e0b',
+        fillOpacity: 0.15,
+        strokeColor: '#f59e0b',
+        strokeWeight: 2,
+      })),
+      ...(geoData.crowdedAreas || []).map(a => ({
+        id: `crowded-${a.id}`,
+        center: a.center,
+        radius: a.radius,
+        fillColor: '#ef4444',
+        fillOpacity: 0.2,
+        strokeColor: '#ef4444',
+        strokeWeight: 2,
+      })),
+    ];
+  }, [geoData, location]);
+
   useEffect(() => {
     window.onerror = (msg, url, lineNo, columnNo, error) => {
       console.error("GLOBAL ERROR:", msg, "at", url, ":", lineNo, ":", columnNo, error);
@@ -132,12 +188,59 @@ const Dashboard = () => {
       setShowDisclaimer(true);
     }
 
-    // Initialize with stored location or default
-    const storedLat = parseFloat(localStorage.getItem('initialLat'));
-    const storedLng = parseFloat(localStorage.getItem('initialLng'));
-    if (!isNaN(storedLat) && !isNaN(storedLng)) {
-      setLocation({ lat: storedLat, lng: storedLng });
-    }
+    // Get user's current location immediately on mount
+    const getCurrentLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const currentLat = position.coords.latitude;
+            const currentLng = position.coords.longitude;
+            console.log('Got current location:', currentLat, currentLng);
+            setLocation({ lat: currentLat, lng: currentLng });
+            setIsLoadingLocation(false);
+            
+            // Store in localStorage for future use
+            localStorage.setItem('initialLat', currentLat.toString());
+            localStorage.setItem('initialLng', currentLng.toString());
+            
+            // Initialize previous location for speed calculation
+            prevLocRef.current = { lat: currentLat, lng: currentLng, t: Date.now() };
+            
+            // Check risk for initial location
+            checkRisk(currentLat, currentLng);
+          },
+          (error) => {
+            console.warn('Geolocation error:', error.message);
+            // If we already have a stored location, just use it
+            if (location) {
+              console.log('Using stored location:', location);
+              setIsLoadingLocation(false);
+            } else {
+              // Fallback to default location (Delhi)
+              console.log('Using default location: Delhi');
+              const defaultLocation = { lat: 28.6139, lng: 77.2090 };
+              setLocation(defaultLocation);
+              setIsLoadingLocation(false);
+            }
+          },
+          { 
+            enableHighAccuracy: true,
+            timeout: 5000, // Reduced from 10s to 5s for faster response
+            maximumAge: 30000 // Allow cached location up to 30 seconds old
+          }
+        );
+      } else {
+        console.warn('Geolocation not supported');
+        // Use stored or default location
+        if (!location) {
+          setLocation({ lat: 28.6139, lng: 77.2090 });
+        }
+        setIsLoadingLocation(false);
+      }
+    };
+
+    // Get current location first
+    getCurrentLocation();
 
     // Real-time tracking
     let watchId;
@@ -148,7 +251,7 @@ const Dashboard = () => {
           const newLng = position.coords.longitude;
           const now = Date.now();
           const prev = prevLocRef.current;
-          const distM = L.latLng(prev.lat, prev.lng).distanceTo(L.latLng(newLat, newLng));
+          const distM = getDistance(prev.lat, prev.lng, newLat, newLng);
           const dtS = Math.max(1, (now - prev.t) / 1000);
           let kmh;
           if (typeof position.coords.speed === 'number' && position.coords.speed !== null && position.coords.speed >= 0) {
@@ -180,7 +283,7 @@ const Dashboard = () => {
           checkRisk(newLat, newLng);
         },
         (err) => {
-          console.warn("Geolocation failed, using simulation");
+          console.warn("Geolocation watch failed, using simulation");
           startSimulation();
         },
         { enableHighAccuracy: true }
@@ -251,38 +354,47 @@ const Dashboard = () => {
 
   const shouldFetchNearby = (lat, lng, now) => {
     const last = lastNearbyFetchRef.current;
-    const movedM = L.latLng(lat, lng).distanceTo(L.latLng(last.lat, last.lng));
-    return (now - last.t) > 20000 || movedM > 300;
+    const movedM = getDistance(lat, lng, last.lat, last.lng);
+    // Increased from 20s to 60s and 300m to 500m to reduce API calls
+    return (now - last.t) > 60000 || movedM > 500;
   };
   const fetchNearbyLandmarks = async (lat, lng) => {
     try {
       const query = `[out:json];(node(around:1200,${lat},${lng})["name"]["tourism"];node(around:1200,${lat},${lng})["name"]["amenity"];node(around:1200,${lat},${lng})["name"]["historic"];);out 20;`;
-      const res = await axios.get('https://overpass-api.de/api/interpreter', { params: { data: query } });
+      const res = await axios.get('https://overpass-api.de/api/interpreter', { 
+        params: { data: query },
+        timeout: 5000 // 5 second timeout to prevent long waits
+      });
       const elements = res.data?.elements || [];
       let best = null, bestD = Infinity;
       elements.forEach(el => {
-        const p = L.latLng(lat, lng);
-        const d = p.distanceTo(L.latLng(el.lat, el.lon));
+        const d = getDistance(lat, lng, el.lat, el.lon);
         const name = el.tags?.name;
         if (name && d < bestD) { bestD = d; best = { name, distM: d }; }
       });
       if (best) setNearestLandmark(best);
       lastNearbyFetchRef.current = { lat, lng, t: Date.now() };
-    } catch (e) { }
+    } catch (e) {
+      // Silently fail - landmark fetching is not critical
+      console.log('Landmark fetch skipped (API timeout or unavailable)');
+      lastNearbyFetchRef.current = { lat, lng, t: Date.now() };
+    }
   };
 
   useEffect(() => {
+    if (!location) return; // Don't process warnings if location is not available yet
+    
     const warns = [];
     // Restricted zones proximity (~500m before entry)
     (geoData.restrictedZones || []).forEach(z => {
-      const d = L.latLng(location.lat, location.lng).distanceTo(L.latLng(z.center.lat, z.center.lng));
+      const d = getDistance(location.lat, location.lng, z.center.lat, z.center.lng);
       if (d > z.radius && d - z.radius <= 500) {
         warns.push({ type: 'restricted', id: z.id, message: `Restricted area ahead: ${z.name} (~${Math.max(0, Math.round(d - z.radius))}m)` });
       }
     });
     // Crowded areas caution when inside
     (geoData.crowdedAreas || []).forEach(a => {
-      const d = L.latLng(location.lat, location.lng).distanceTo(L.latLng(a.center.lat, a.center.lng));
+      const d = getDistance(location.lat, location.lng, a.center.lat, a.center.lng);
       if (d <= a.radius) {
         warns.push({ type: 'crowded', id: a.id, message: `Overcrowded area: ${a.name} — caution` });
       }
@@ -291,7 +403,7 @@ const Dashboard = () => {
     // Nearest landmark
     let nearest = null, best = Infinity;
     (geoData.landmarks || []).forEach(lm => {
-      const d = L.latLng(location.lat, location.lng).distanceTo(L.latLng(lm.location.lat, lm.location.lng));
+      const d = getDistance(location.lat, location.lng, lm.location.lat, lm.location.lng);
       if (d < best) { best = d; nearest = { name: lm.name, distM: d }; }
     });
     setNearestLandmark(nearest);
@@ -481,7 +593,9 @@ const Dashboard = () => {
         <div className="map-info-card">
           <div className="map-info-item">
             <MapPin size={16} />
-            <span>{location.lat.toFixed(4)}, {location.lng.toFixed(4)}</span>
+            <span>
+              {location ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : 'Getting location...'}
+            </span>
           </div>
           <div className="map-info-item">
             <Activity size={16} />
@@ -496,35 +610,43 @@ const Dashboard = () => {
         </div>
 
         <div className="map-container-wrapper" style={{ height: '100%', width: '100%' }}>
-          {location?.lat && location?.lng ? (
-            <MapContainer center={[location.lat, location.lng]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[location.lat, location.lng]}>
-                <Popup>
-                  <div style={{ color: '#0f172a' }}>
-                    <strong>Current Location</strong><br />
-                    Status: {risk?.label || 'Safe'}
-                  </div>
-                </Popup>
-              </Marker>
-              {path.length > 1 && (
-                <Polyline positions={path} pathOptions={{ color: '#3B82F6', weight: 4, opacity: 0.7 }} />
-              )}
-              {(geoData.restrictedZones || []).map(z => (
-                <Circle key={z.id} center={[z.center.lat, z.center.lng]} radius={z.radius} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15 }} />
-              ))}
-              {(geoData.crowdedAreas || []).map(a => (
-                <Circle key={a.id} center={[a.center.lat, a.center.lng]} radius={a.radius} pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.2 }} />
-              ))}
-              <MapUpdater location={location} activeTab={activeTab} />
-            </MapContainer>
-          ) : (
-            <div className="loading-map">
-              <p>Loading interactive map...</p>
+          {!location || isLoadingLocation ? (
+            <div className="loading-map" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              background: '#1e293b',
+              color: '#cbd5e1'
+            }}>
+              <div style={{ 
+                width: '40px', 
+                height: '40px', 
+                border: '4px solid rgba(59, 130, 246, 0.3)',
+                borderTop: '4px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                marginBottom: '15px'
+              }} />
+              <p>Getting your location...</p>
+              <style>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              `}</style>
             </div>
+          ) : (
+            <GoogleMapWrapper
+              center={location}
+              zoom={13}
+              markers={markers}
+              polylines={polylines}
+              circles={circles}
+              isMobile={isMobile}
+              style={{ height: '100%', width: '100%' }}
+            />
           )}
         </div>
 
@@ -739,22 +861,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-function MapUpdater({ location, activeTab }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView([location.lat, location.lng]);
-  }, [location, map]);
-
-  useEffect(() => {
-    if (activeTab === 'map') {
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 100);
-    }
-  }, [activeTab, map]);
-
-  return null;
-}
 
 export default Dashboard;
