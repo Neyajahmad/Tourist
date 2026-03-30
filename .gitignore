@@ -11,14 +11,23 @@ client/dist/
 client/build/
 server/dist/
 
-# Misc
-.DS_Store
+# Environment Variables (NEVER commit these!)
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
 .env*.local
+server/.env
+client/.env
+client/.env.development
+client/.env.production
+
+# Misc
+.DS_Store
 
 # Logs
 npm-debug.log*

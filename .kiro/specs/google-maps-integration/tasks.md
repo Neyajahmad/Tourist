@@ -6,7 +6,7 @@ This implementation plan converts the Google Maps integration design into action
 
 **Implementation Language**: JavaScript (React)
 
-**API Key**: AIzaSyAABImcnCQJvcX4u0Vesivu7A8
+**API Key**: Configured via environment variables (see SETUP_INSTRUCTIONS.md)
 
 ## Tasks
 

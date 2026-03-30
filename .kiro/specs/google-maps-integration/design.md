@@ -1250,7 +1250,7 @@ Add Google Maps script tag in the `<head>` section:
 <head>
   <!-- Existing meta tags -->
   <script 
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAABImcnCQJvcX4u0Vesivu7A_ucdc37A8&libraries=marker"
+    src="https://maps.googleapis.com/maps/api/js?key=GOOGLE_MAPS_API_KEY_PLACEHOLDER&libraries=marker"
     async
     defer
   ></script>
@@ -1933,7 +1933,7 @@ infoWindow.addListener('domready', () => {
 - Loaded via CDN script tag
 - No npm package required
 - Size: ~200KB (loaded asynchronously)
-- API Key: AIzaSyAABImcnCQJvcX4u0Vesivu7A_ucdc37A8
+- API Key: Configured via environment variables (VITE_GOOGLE_MAPS_API_KEY)
 
 
 
@@ -2089,7 +2089,7 @@ client/
 
 **Google Maps JavaScript API v3**
 - Documentation: https://developers.google.com/maps/documentation/javascript
-- API Key: AIzaSyAABImcnCQJvcX4u0Vesivu7A_ucdc37A8
+- API Key: Configured via environment variables (VITE_GOOGLE_MAPS_API_KEY)
 - Libraries: marker
 
 **MarkerClusterer**

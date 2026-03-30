@@ -84,8 +84,8 @@ VITE_API_BASE_URL=https://your-api-domain.com
 ## ⚠️ CRITICAL: Before Going Live
 
 ### 1. Google Maps API Key
-**Current Key:** `AIzaSyCbqIsWii1axk962rzDk7Fjg3lTnMGufcg`
-**Location:** `client/index.html` line 18
+**Setup Required:** Configure your own Google Maps API key in environment variables
+**Location:** `client/.env.development` or `client/.env.production`
 
 **Verify:**
 - [ ] API key is valid

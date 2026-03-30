@@ -23,16 +23,16 @@ The most common causes for this error are:
 **Before:**
 ```html
 <script 
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAABImcnCQJvcX4u0Vesivu7A8&libraries=marker"
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_OLD_API_KEY&libraries=marker"
   async
   defer
 ></script>
 ```
 
-**After:**
+**After (Using Environment Variables):**
 ```html
 <script 
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAABImcnCQJvcX4u0Vesivu7A8&callback=initMap&v=weekly"
+  src="https://maps.googleapis.com/maps/api/js?key=GOOGLE_MAPS_API_KEY_PLACEHOLDER&callback=initMap&v=weekly"
   async
   defer
 ></script>
@@ -118,7 +118,7 @@ The most common causes for this error are:
 #### Option C: Remove API Key Restrictions (Temporary)
 1. Go to https://console.cloud.google.com/
 2. Navigate to "APIs & Services" > "Credentials"
-3. Click on your API key: `AIzaSyAABImcnCQJvcX4u0Vesivu7A8`
+3. Click on your API key in the credentials list
 4. Under "Application restrictions": Select "None"
 5. Under "API restrictions": Select "Don't restrict key"
 6. Click "Save"

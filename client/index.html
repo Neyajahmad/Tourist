@@ -9,16 +9,11 @@
     <meta name="description" content="Net2Vision - Your AI-powered safety companion for secure travel and real-time emergency support" />
     <meta name="theme-color" content="#3B82F6" />
     <title>Net2Vision - Tourist Safety Platform</title>
-    <!-- IMPORTANT: Replace YOUR_GOOGLE_MAPS_API_KEY with your actual API key from Google Cloud Console -->
-    <!-- Steps to get a valid API key:
-         1. Go to https://console.cloud.google.com/apis/credentials
-         2. Create a new API key or use an existing one
-         3. Enable billing for the project (required!)
-         4. Enable "Maps JavaScript API" in the API Library
-         5. Replace YOUR_GOOGLE_MAPS_API_KEY below with your actual key
-    -->
+    <!-- Google Maps API - Loaded via script tag -->
+    <!-- API key is managed through environment variables -->
+    <!-- See SETUP_INSTRUCTIONS.md for configuration -->
     <script 
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCbqIsWii1axk962rzDk7Fjg3lTnMGufcg&callback=initMap&v=weekly"
+      src="https://maps.googleapis.com/maps/api/js?key=GOOGLE_MAPS_API_KEY_PLACEHOLDER&callback=initMap&v=weekly"
       async
       defer
     ></script>

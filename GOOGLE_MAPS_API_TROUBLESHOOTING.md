@@ -4,8 +4,8 @@
 The Google Maps API is failing to load with the error: "Oops! Something went wrong. This page didn't load Google Maps correctly"
 
 ## API Key Information
-- **Current API Key**: `AIzaSyAABImcnCQJvcX4u0Vesivu7A8`
-- **Script URL**: `https://maps.googleapis.com/maps/api/js?key=AIzaSyAABImcnCQJvcX4u0Vesivu7A8&callback=initMap&v=weekly`
+- **API Key**: Configured via environment variables (see SETUP_INSTRUCTIONS.md)
+- **Script URL**: Loaded dynamically with Vite plugin
 
 ## Common Causes & Solutions
 
@@ -75,7 +75,7 @@ The Google Maps API is failing to load with the error: "Oops! Something went wro
 ### Quick Test in Browser Console
 Open your browser console and run:
 ```javascript
-fetch('https://maps.googleapis.com/maps/api/js?key=AIzaSyAABImcnCQJvcX4u0Vesivu7A8&callback=test')
+fetch('https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=test')
   .then(response => {
     console.log('API Key Status:', response.status);
     if (response.status === 200) {

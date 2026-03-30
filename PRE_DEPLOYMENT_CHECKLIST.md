@@ -57,8 +57,8 @@
 
 ### Environment Variables
 - ⚠️ **ACTION REQUIRED:** Update Google Maps API key
-  - Current: `AIzaSyAABImcnCQJvcX4u0Vesivu7A8` (placeholder)
-  - Location: `client/index.html`
+  - Configure in environment variables (see SETUP_INSTRUCTIONS.md)
+  - Location: `client/.env.production.local`
   - **MUST** replace with production API key
 
 ### API Configuration

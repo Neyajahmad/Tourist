@@ -25,7 +25,7 @@ This document specifies the requirements for replacing the current Leaflet/OpenS
 
 #### Acceptance Criteria
 
-1. THE System SHALL load the Google Maps JavaScript API script with API key AIzaSyAABImcnCQJvcX4u0Vesivu7A_ucdc37A8 in the HTML document
+1. THE System SHALL load the Google Maps JavaScript API script with API key from environment variables in the HTML document
 2. THE System SHALL initialize Google Maps API before rendering any map components
 3. THE System SHALL remove all Leaflet dependencies (react-leaflet, leaflet) from package.json
 4. THE System SHALL remove all Leaflet CSS imports from the codebase

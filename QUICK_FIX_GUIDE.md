@@ -8,7 +8,7 @@ Map shows error: "This page didn't load Google Maps correctly"
 ### Enable Billing in Google Cloud Console
 
 1. **Go to:** https://console.cloud.google.com/billing
-2. **Select your project** (the one with API key `AIzaSyAABImcnCQJvcX4u0Vesivu7A8`)
+2. **Select your project** (the one with your Google Maps API key)
 3. **Click:** "Link a billing account" or "Enable billing"
 4. **Add a payment method** (credit/debit card)
 5. **Wait 1-2 minutes** for changes to take effect

@@ -9,7 +9,7 @@
 - Error: "Authentication failure detected"
 
 ## Why This Happens
-The API key `AIzaSyAABImcnCQJvcX4u0Vesivu7A8` has one of these issues:
+Your Google Maps API key has one of these issues:
 1. ❌ Billing is not enabled (MOST COMMON - 90% of cases)
 2. ❌ Maps JavaScript API is not enabled
 3. ❌ API key is invalid or expired
@@ -98,7 +98,7 @@ If you want to fix the existing key instead of creating a new one:
 
 ### Step 1: Find Your API Key
 1. Go to: https://console.cloud.google.com/apis/credentials
-2. Look for the key: `AIzaSyAABImcnCQJvcX4u0Vesivu7A8`
+2. Look for your Google Maps API key in the list
 3. Click on it
 
 ### Step 2: Enable Billing
