@@ -31,6 +31,7 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/tourist_saf
   .catch(err => console.log(err))
 
 // Health check route for uptime monitoring (UptimeRobot, Render, etc.)
+// Supports both GET and HEAD requests
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -41,13 +42,22 @@ app.get('/', (req, res) => {
   })
 })
 
-// Health check endpoint (alternative)
+// HEAD request support for UptimeRobot (responds immediately without body)
+app.head('/', (req, res) => {
+  res.status(200).end()
+})
+
+// Health check endpoint (alternative) - supports GET and HEAD
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
     message: 'Net2Vision API is operational',
     timestamp: new Date().toISOString()
   })
+})
+
+app.head('/health', (req, res) => {
+  res.status(200).end()
 })
 
 app.use('/api/auth', authRoutes)
