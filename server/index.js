@@ -30,6 +30,26 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/tourist_saf
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log(err))
 
+// Health check route for uptime monitoring (UptimeRobot, Render, etc.)
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Server is running 🚀',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  })
+})
+
+// Health check endpoint (alternative)
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    message: 'Net2Vision API is operational',
+    timestamp: new Date().toISOString()
+  })
+})
+
 app.use('/api/auth', authRoutes)
 app.use('/api/incidents', incidentRoutes)
 
@@ -233,27 +253,33 @@ io.on('connection', socket => {
   })
 })
 
-  ; (async () => {
-    let port = parseInt(process.env.PORT || 5000, 10)
-    while (true) {
-      try {
-        await new Promise((resolve, reject) => {
-          const onError = (e) => reject(e)
-          server.once('error', onError)
-          server.listen(port, () => {
-            server.off('error', onError)
-            resolve()
-          })
-        })
-        console.log(`Server running on port ${port}`)
-        break
-      } catch (e) {
-        if (e && e.code === 'EADDRINUSE') {
-          port += 1
-          continue
-        } else {
-          throw e
-        }
-      }
-    }
-  })()
+// Global error handling middleware (must be after all routes)
+app.use((err, req, res, next) => {
+  console.error('Error:', err.stack)
+  res.status(500).json({
+    status: 'error',
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  })
+})
+
+// 404 handler for undefined routes (must be last)
+app.use((req, res) => {
+  res.status(404).json({
+    status: 'error',
+    message: 'Route not found',
+    path: req.path
+  })
+})
+
+// Start server with proper error handling
+const PORT = process.env.PORT || 5001
+
+server.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`)
+  console.log(`✅ Health check available at: http://localhost:${PORT}/`)
+  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`)
+}).on('error', (err) => {
+  console.error('❌ Server failed to start:', err.message)
+  process.exit(1)
+})
